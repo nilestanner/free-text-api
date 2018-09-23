@@ -3,7 +3,6 @@ const config = require('./config.js');
 const carrierLookup = require('./lib/carrier-lookup/barrel.js');
 const consts = require('./const/barrel.js');
 const nodemailer = require('nodemailer');
-var sgTransport = require('nodemailer-sendgrid-transport');
 const transporter = nodemailer.createTransport(config.transport.sendGrid);
 
 
