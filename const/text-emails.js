@@ -1,6 +1,6 @@
 module.exports = {
     'Verizon':{
-        'sms':'@vzwpix.com',
+        'sms':'@vtext.com',
         'mms':'@vzwpix.com'
     }
 };

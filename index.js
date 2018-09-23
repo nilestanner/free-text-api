@@ -3,7 +3,8 @@ const config = require('./config.js');
 const carrierLookup = require('./lib/carrier-lookup/barrel.js');
 const consts = require('./const/barrel.js');
 const nodemailer = require('nodemailer');
-const transporter = nodemailer.createTransport(config.transport.configUrl);
+var sgTransport = require('nodemailer-sendgrid-transport');
+const transporter = nodemailer.createTransport(config.transport.sendGrid);
 
 
 const sendText = (number, message, country) => {
@@ -13,21 +14,28 @@ const sendText = (number, message, country) => {
             console.log(carrier);
             const emailPostFix = consts.emails[carrier].sms;
             console.log(emailPostFix);
-            const mailOptions = {
-                from: config.transport.email,
-                to: `1${number}${emailPostFix}`,
-                subject: 'Sending Email using Node.js',
-                text: 'That was easy!'
-            };
-            transporter.sendMail(mailOptions, function(error, info){
-                if (error) {
-                  console.log(error);
-                } else {
-                  console.log('Email sent: ' + info.response);
-                }
-            });
+            const email = `${number}${emailPostFix}`;
+            mail(email, message);
         }
     })
 }
 
-sendText(***REMOVED***, 'test');
+const mail = (email, message, subject) => {
+    return new Promise((resolve, reject) => {
+        const mailOptions = {
+            from: config.mailOptions.from,
+            to: email,
+            text: message
+        };
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve('Email sent: ' + info.response);
+            }
+        });
+    });
+}
+
+// sendText(123, 'cool test');
+
