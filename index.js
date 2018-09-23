@@ -37,5 +37,5 @@ const mail = (email, message, subject) => {
     });
 }
 
-// sendText(123, 'cool test');
+sendText(123, 'I am texting with niles texting service');
 
