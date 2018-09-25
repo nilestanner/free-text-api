@@ -9,7 +9,11 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/***REMOVED***/free-text-api.git"
+  },
+  "author": "Niles Tanner",
   "license": "ISC",
   "dependencies": {
     "nodemailer": "^4.6.8",

@@ -27,7 +27,7 @@ module.exports = (config) => {
     }
     
     const getCarrier = async (number) => {
-        const carrierInfo = await carrierLookup[config.carrierLookup.method](number);
+        const carrierInfo = await carrierLookup[config.carrierLookup.method](config.carrierLookup, number);
         if (carrierInfo.valid) {
             const carrier = consts.verifiers[config.carrierLookup.method][carrierInfo.carrier];
             return carrier;
