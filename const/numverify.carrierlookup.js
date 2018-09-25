@@ -1,5 +1,5 @@
 module.exports = {
-    'AT&T Mobility LLC':'ATT',
-    'Cellco Partnership (Verizon Wireless)':'Verizon',
-    'Sprint Corp.': 'Sprint'
+    'AT&T Mobility LLC':'att',
+    'Cellco Partnership (Verizon Wireless)':'verizon',
+    'Sprint Corp.': 'sprint'
 };

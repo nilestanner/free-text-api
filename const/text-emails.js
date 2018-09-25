@@ -1,13 +1,13 @@
 module.exports = {
-    'Verizon':{
+    'verizon':{
         'sms':'@vtext.com',
         'mms':'@vzwpix.com'
     },
-    'ATT': {
+    'att': {
         'sms':'@txt.att.net',
         'mms':'@mms.att.net'
     },
-    'Sprint': {
+    'sprint': {
         'sms':'@messaging.sprintpcs.com',
         'mms':'@messaging.sprintpcs.com'
     }
