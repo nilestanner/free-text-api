@@ -3,10 +3,10 @@ const freeTextAPI = require('../index.js');
 
 const textService = freeTextAPI({
     carrierLookup: {
-        method:'numverify',
-        apiKey:'***REMOVED***',
+        method: 'numverify',
+        apiKey: '####',
         defaultCountry: 'US',
-        path:'http://apilayer.net/api/validate'
+        path: 'http://apilayer.net/api/validate'
     },
     mailOptions: {
         from: 'noreply@freetexter.com'
@@ -14,14 +14,14 @@ const textService = freeTextAPI({
     transport: {
         service: 'SendGrid',
         auth: {
-            user: '***REMOVED***',
-            pass: '***REMOVED***'
+            user: 'user',
+            pass: '****'
         }
     }
 });
 
 textService.sendText({
-    number:***REMOVED***,
+    number: 1234567890,
     message:'Hello from the text service',
     carrier:'Verizon',
     from: 'test@test.com'
