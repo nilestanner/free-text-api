@@ -83,3 +83,4 @@ typings/
 config.js
 secrets.txt
 .git.bfg-report
+testingFile.js

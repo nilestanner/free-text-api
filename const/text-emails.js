@@ -10,5 +10,13 @@ module.exports = {
     'sprint': {
         'sms':'@messaging.sprintpcs.com',
         'mms':'@messaging.sprintpcs.com'
+    },
+    'tmobile': {
+        'sms':'@tmomail.net',
+        'mms':'@tmomail.net'
+    },
+    'cricket': {
+        'sms':'@sms.mycricket.com',
+        'mms':'@mms.mycricket.com'
     }
 };

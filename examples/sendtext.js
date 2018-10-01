@@ -3,10 +3,9 @@ const freeTextAPI = require('../index.js');
 
 const textService = freeTextAPI({
     carrierLookup: {
-        method: 'numverify',
-        apiKey: '####',
-        defaultCountry: 'US',
-        path: 'http://apilayer.net/api/validate'
+        method: 'whitepages',
+        apiKey: '*****',
+        defaultCountry: 'US'
     },
     mailOptions: {
         from: 'noreply@freetexter.com'
