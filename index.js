@@ -13,8 +13,7 @@ module.exports = (config) => {
         if (!from) {
             options.from = config.mailOptions.from;
         }
-        options.carrier = carrier.toLowerCase();
-        if (!carrier) {
+        if (!options.carrier) {
             options.carrier = await getCarrier(number);
         }
         const verifyResult = verify(options);
@@ -36,7 +35,7 @@ module.exports = (config) => {
     }
     
     const formatEmail = ({number, country, carrier}) => {
-        const emailPostFix = consts.emails[carrier].sms;
+        const emailPostFix = consts.emails.getDomain(carrier, 'sms');
         const email = `${number}${emailPostFix}`;
         return email;
     } 
