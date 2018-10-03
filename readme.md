@@ -17,6 +17,9 @@ You can go without this configuration if you already know the carrier for the nu
 Otherwise you can sign up for one of the following supported APIs:
 
 * [NumVerify](https://numverify.com/)
+* [Whitepages](https://pro.whitepages.com/)
+
+Whitepages seems to be more reliable in determining the carrier.
 
 ## Outbound emails
 
@@ -34,10 +37,9 @@ const freeTextAPI = require('free-text-api');
 
 const textService = freeTextAPI({
     carrierLookup: { // this should include all the nessisary configurations for your carrier lookup
-        method: 'numverify',
+        method: 'numverify', // 'numberify' or 'whitepages'
         apiKey: '####',
-        defaultCountry: 'US',
-        path: 'http://apilayer.net/api/validate'
+        defaultCountry: 'US'
     },
     mailOptions: { // this is optional, but if you go without you must provide a from when sending a text!
         from: 'noreply@freetexter.com'

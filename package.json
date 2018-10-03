@@ -1,7 +1,7 @@
 {
   "name": "free-text-api",
   "version": "1.0.1",
-  "description": "collection of apis and libraries that allow to add free texting to any service",
+  "description": "Collection of apis and libraries that allow to add free texting to any service",
   "main": "index.js",
   "directories": {
     "lib": "lib"
