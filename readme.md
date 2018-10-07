@@ -30,7 +30,7 @@ Next you will need to add a emailing service to your application.
 
 ## Some sample code
 
-
+* [Express/ NodeJS example](https://github.com/nilestanner/free-text-api-nodejs)
 
 ```
 const freeTextAPI = require('free-text-api');

@@ -6,32 +6,41 @@ const nodemailer = require('nodemailer');
 const verify = require('./lib/verifier/verifier');
 
 module.exports = (config) => {
+    verify(config, 'configFormat');
+
     const transporter = nodemailer.createTransport(config.transport);
 
     const sendText = async (options) => {
-        const {number, message, country, carrier, from} = options;
-        if (!from) {
+        options = await repairTextOptions(options);
+        try {
+            const verifyResult = await verify(options, 'textOptionsFormat');
+            options.email = formatEmail(options);
+            const result = await mail(options);
+            return result;
+        } 
+        catch (ex) {
+            return ex.toString();
+        }
+    }
+
+    const repairTextOptions = async (options) => {
+        if (!options.from) {
             options.from = config.mailOptions.from;
         }
         if (!options.carrier) {
             options.carrier = await getCarrier(number);
         }
-        const verifyResult = verify(options);
-        if (!verifyResult.valid) {
-            return verifyResult.reason;
-        }
-        options.email = formatEmail(options);
-        const result = await mail(options);
-        return result;
+        options.number = options.number + '';
+        return options;
     }
     
     const getCarrier = async (number) => {
-        const carrierInfo = await carrierLookup[config.carrierLookup.method](config.carrierLookup, number);
+        const carrierInfo = await carrierLookup[config.carrierLookup.method.toLowerCase()](config.carrierLookup, number);
         if (carrierInfo.valid) {
             const carrier = consts.verifiers[config.carrierLookup.method][carrierInfo.carrier];
             return carrier;
         }
-        return null;
+        throw `Number is not valid, check number or carrier lookup configuration`;
     }
     
     const formatEmail = ({number, country, carrier}) => {
@@ -57,7 +66,12 @@ module.exports = (config) => {
         });
     }
 
+    const getCarrierList = () => {
+        return consts.emails.getPossibleCarriers();
+    }
+
     return {
-        sendText
+        sendText,
+        getCarrierList
     };
 }

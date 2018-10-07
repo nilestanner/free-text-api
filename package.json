@@ -16,6 +16,7 @@
   "author": "Niles Tanner",
   "license": "ISC",
   "dependencies": {
+    "node-input-validator": "^2.3.1",
     "nodemailer": "^4.6.8",
     "request": "^2.88.0"
   }
