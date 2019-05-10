@@ -4,12 +4,18 @@ const carrierLookup = require('./lib/carrier-lookup/barrel.js');
 const consts = require('./const/barrel.js');
 const nodemailer = require('nodemailer');
 const verify = require('./lib/verifier/verifier');
+const sgTransport = require('nodemailer-sendgrid-transport');
 
 module.exports = (config) => {
     verify(config, 'configFormat');
 
-    const transporter = nodemailer.createTransport(config.transport);
-
+    let transporter;
+    if (config.transport.service.toLowerCase() === 'sendgrid') {
+        transporter = nodemailer.createTransport(sgTransport(config.transport));
+    } else {
+        transporter = nodemailer.createTransport(config.transport);
+    }
+    
     const sendText = async (options) => {
         options = await repairTextOptions(options);
         try {
