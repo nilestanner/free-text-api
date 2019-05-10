@@ -55,9 +55,10 @@ module.exports = (config) => {
         return email;
     } 
     
-    const mail = ({email, message, from}) => {
+    const mail = ({email, message, from, subject}) => {
         return new Promise((resolve, reject) => {
             const mailOptions = {
+                subject: subject || 'Message from free-text-api',
                 from: from,
                 to: email,
                 text: message
