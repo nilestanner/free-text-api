@@ -41,6 +41,9 @@ module.exports = (config) => {
     }
     
     const getCarrier = async (number) => {
+        if (!config.carrierLookup || !config.carrierLookup.method || !config.carrierLookup.apiKey) {
+            throw 'No Carrier method was provided in the config and no Carrier was provided in the request';
+        }
         const carrierInfo = await carrierLookup[config.carrierLookup.method.toLowerCase()](config.carrierLookup, number);
         if (carrierInfo.valid) {
             const carrier = consts.verifiers[config.carrierLookup.method][carrierInfo.carrier];
