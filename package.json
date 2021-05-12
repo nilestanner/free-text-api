@@ -17,7 +17,7 @@
   "license": "ISC",
   "dependencies": {
     "node-input-validator": "^2.3.1",
-    "nodemailer": "^4.6.8",
+    "nodemailer": "^6.4.16",
     "nodemailer-sendgrid-transport": "^0.2.0",
     "request": "^2.88.0"
   }
