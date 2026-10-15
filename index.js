@@ -34,7 +34,7 @@ module.exports = (config) => {
             options.from = config.mailOptions.from;
         }
         if (!options.carrier) {
-            options.carrier = await getCarrier(number);
+            options.carrier = await getCarrier(options.number);
         }
         options.number = options.number + '';
         return options;

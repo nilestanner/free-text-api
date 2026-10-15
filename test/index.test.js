@@ -97,17 +97,15 @@ test('sendGrid service uses the sendgrid transport wrapper', (t) => {
     assert.notStrictEqual(spy.mock.calls[0].arguments[0].service, 'SendGrid');
 });
 
-// BUG (not fixed in this PR): repairTextOptions calls getCarrier(number) but `number`
-// is not defined in that scope, so omitting `carrier` throws a ReferenceError
-// instead of performing the configured carrier lookup.
+// Regression: repairTextOptions used to call getCarrier(number) with `number` undefined (ReferenceError).
 test('sendText performs carrier lookup when carrier is omitted',
-    { todo: 'repairTextOptions references undefined `number` (ReferenceError)' },
     async (t) => {
-        fakeTransport(t);
+        const sent = fakeTransport(t);
         t.mock.method(request, 'get', (url, cb) => cb(null, {}, JSON.stringify({ valid: true, carrier: 'AT&T Mobility LLC' })));
         const cfg = baseConfig();
         cfg.carrierLookup = { method: 'numverify', apiKey: 'k', defaultCountry: 'US' };
         const svc = freeText(cfg);
         const result = await svc.sendText({ number: '5551234567', message: 'hi' });
         assert.strictEqual(result, 'Email sent: 250 OK');
+        assert.strictEqual(sent[0].to, '5551234567@txt.att.net');
     });
