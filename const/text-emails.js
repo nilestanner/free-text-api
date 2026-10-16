@@ -1,20 +1,26 @@
+// Cache possible carriers array for faster retrieval
+let possibleCarriersCache = null;
+
 const getDomain = (carrier, messageType = 'sms') => {
     if (messageType !== 'sms' && messageType !== 'mms') {
         throw `${messageType} is invalid, message type must be sms or mms`;
     }
-    const carriers = getPossibleCarriers();
     if (!carrier) {
         throw `Must provide carrier name`;
     }
     carrier = carrier.toLowerCase();
-    if (!carriers.includes(carrier)) {
-        throw `${carrier} is invalid, carrier must be one of the following: \n ${carriers.join('\n')}`;
+    // ⚡ Bolt: O(1) hash map lookup instead of O(N) Array.includes()
+    if (!Object.hasOwn(mapping, carrier)) {
+        throw `${carrier} is invalid, carrier must be one of the following: \n ${getPossibleCarriers().join('\n')}`;
     }
     return mapping[carrier][messageType];
 }
 
 const getPossibleCarriers = () => {
-    return Object.keys(mapping);
+    if (!possibleCarriersCache) {
+        possibleCarriersCache = Object.keys(mapping);
+    }
+    return possibleCarriersCache;
 }
 
 
