@@ -1,0 +1,3 @@
+## 2024-06-25 - Promise Rejection Bug in Carrier Lookups
+**Learning:** In `lib/carrier-lookup/numverify.js` and `lib/carrier-lookup/whitepages.js`, network errors in `request.get` are handled by `throw`ing inside the callback rather than calling `reject()`. This results in an uncaught exception that crashes the Node process when network failures occur.
+**Action:** When testing callback-based asynchronous functions wrapped in Promises, check if errors are properly propagated using `reject()`. Mark tests revealing unhandled exceptions with `{ todo: 'throws uncaught exception instead of rejecting' }` to prevent suite crashes.
