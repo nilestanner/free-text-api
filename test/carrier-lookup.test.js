@@ -22,6 +22,11 @@ test('numverify explicit country overrides defaultCountry', async (t) => {
     assert.match(get.mock.calls[0].arguments[0], /country_code=CA$/);
 });
 
+test('numverify rejects on network error', { todo: 'throws uncaught exception instead of rejecting' }, async (t) => {
+    t.mock.method(request, 'get', (url, cb) => cb(new Error('network error')));
+    await assert.rejects(lookups.numverify({ apiKey: 'KEY', defaultCountry: 'US' }, '5551234567'), /network error/);
+});
+
 test('whitepages builds the phone_intel URL, defaults country to US, and marks result valid', async (t) => {
     const get = t.mock.method(request, 'get', (url, cb) => cb(null, {}, JSON.stringify({ carrier: 'Verizon Wireless' })));
     const res = await lookups.whitepages({ apiKey: 'KEY' }, '5551234567');
@@ -29,6 +34,11 @@ test('whitepages builds the phone_intel URL, defaults country to US, and marks r
     assert.strictEqual(res.carrier, 'Verizon Wireless');
     assert.strictEqual(get.mock.calls[0].arguments[0],
         'https://proapi.whitepages.com/3.0/phone_intel?api_key=KEY&phone.country_hint=US&phone=5551234567');
+});
+
+test('whitepages rejects on network error', { todo: 'throws uncaught exception instead of rejecting' }, async (t) => {
+    t.mock.method(request, 'get', (url, cb) => cb(new Error('network error')));
+    await assert.rejects(lookups.whitepages({ apiKey: 'KEY' }, '5551234567'), /network error/);
 });
 
 test('carrier name mappings point at carriers the email table supports', () => {
