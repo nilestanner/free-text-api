@@ -2,19 +2,26 @@ const getDomain = (carrier, messageType = 'sms') => {
     if (messageType !== 'sms' && messageType !== 'mms') {
         throw `${messageType} is invalid, message type must be sms or mms`;
     }
-    const carriers = getPossibleCarriers();
     if (!carrier) {
         throw `Must provide carrier name`;
     }
     carrier = carrier.toLowerCase();
-    if (!carriers.includes(carrier)) {
+
+    // ⚡ Bolt: Replaced O(N) carriers.includes with O(1) hash map lookup
+    if (!mapping.hasOwnProperty(carrier)) {
+        const carriers = getPossibleCarriers();
         throw `${carrier} is invalid, carrier must be one of the following: \n ${carriers.join('\n')}`;
     }
     return mapping[carrier][messageType];
 }
 
+// ⚡ Bolt: Cached possible carriers array to avoid recomputing Object.keys(mapping)
+let _possibleCarriersCache = null;
 const getPossibleCarriers = () => {
-    return Object.keys(mapping);
+    if (!_possibleCarriersCache) {
+        _possibleCarriersCache = Object.keys(mapping);
+    }
+    return _possibleCarriersCache;
 }
 
 
