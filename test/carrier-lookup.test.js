@@ -13,7 +13,7 @@ test('numverify builds the validate URL and parses the JSON body', async (t) => 
     const res = await lookups.numverify({ apiKey: 'KEY', defaultCountry: 'US' }, '5551234567');
     assert.deepStrictEqual(res, { valid: true, carrier: 'AT&T Mobility LLC' });
     assert.strictEqual(get.mock.calls[0].arguments[0],
-        'http://apilayer.net/api/validate?access_key=KEY&number=5551234567&country_code=US');
+        'https://apilayer.net/api/validate?access_key=KEY&number=5551234567&country_code=US');
 });
 
 test('numverify explicit country overrides defaultCountry', async (t) => {
