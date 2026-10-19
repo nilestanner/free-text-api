@@ -16,11 +16,13 @@ const getDomain = (carrier, messageType = 'sms') => {
     return mapping[carrier][messageType];
 }
 
+// ⚡ Bolt: Cached possible carriers array to avoid recomputing Object.keys(mapping)
+let _possibleCarriersCache = null;
 const getPossibleCarriers = () => {
-    if (!possibleCarriersCache) {
-        possibleCarriersCache = Object.keys(mapping);
+    if (!_possibleCarriersCache) {
+        _possibleCarriersCache = Object.keys(mapping);
     }
-    return possibleCarriersCache;
+    return _possibleCarriersCache;
 }
 
 
