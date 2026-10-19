@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
+const Validator = require('node-input-validator');
 const verify = require('../lib/verifier/verifier');
 
 const goodText = () => ({
@@ -50,4 +51,23 @@ test('configFormat accepts valid config', async () => {
 
 test('configFormat rejects missing transport', async () => {
     await assert.rejects(verify({ mailOptions: { from: 'a@b.com' } }, 'configFormat'), /Errors found in configFormat/);
+});
+
+test('carrierLookup validation rule accepts valid methods', async () => {
+    const v = new Validator({ method: 'numverify' }, { method: 'carrierLookup' });
+    assert.strictEqual(await v.check(), true);
+
+    const v2 = new Validator({ method: 'whitepages' }, { method: 'carrierLookup' });
+    assert.strictEqual(await v2.check(), true);
+});
+
+test('carrierLookup validation rule rejects invalid methods', async () => {
+    const v = new Validator({ method: 'invalid' }, { method: 'carrierLookup' });
+    assert.strictEqual(await v.check(), false);
+    assert.match(v.errors.method.message, /Invalid carrier lookup method/);
+});
+
+test('carrierLookup validation rule is case-insensitive', async () => {
+    const v = new Validator({ method: 'NUMVERIFY' }, { method: 'carrierLookup' });
+    assert.strictEqual(await v.check(), true);
 });
