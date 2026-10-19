@@ -1,16 +1,16 @@
 const fs = require('fs');
 // const config = require('./config.js');
-const carrierLookup = require('./lib/carrier-lookup/barrel.js');
 const consts = require('./const/barrel.js');
 const nodemailer = require('nodemailer');
 const verify = require('./lib/verifier/verifier');
-const sgTransport = require('nodemailer-sendgrid-transport');
 
 module.exports = (config) => {
     verify(config, 'configFormat');
 
     let transporter;
-    if (config.transport.service.toLowerCase() === 'sendgrid') {
+    if (config.transport.service && config.transport.service.toLowerCase() === 'sendgrid') {
+        // ⚡ Bolt: Lazily require sendgrid transport to save ~120ms on startup for non-SendGrid users
+        const sgTransport = require('nodemailer-sendgrid-transport');
         transporter = nodemailer.createTransport(sgTransport(config.transport));
     } else {
         transporter = nodemailer.createTransport(config.transport);
@@ -44,6 +44,8 @@ module.exports = (config) => {
         if (!config.carrierLookup || !config.carrierLookup.method || !config.carrierLookup.apiKey) {
             throw 'No Carrier method was provided in the config and no Carrier was provided in the request';
         }
+        // ⚡ Bolt: Lazily require carrierLookup (and `request` lib) to save ~100ms on startup for users not doing lookups
+        const carrierLookup = require('./lib/carrier-lookup/barrel.js');
         const carrierInfo = await carrierLookup[config.carrierLookup.method.toLowerCase()](config.carrierLookup, number);
         if (carrierInfo.valid) {
             const carrier = consts.verifiers[config.carrierLookup.method][carrierInfo.carrier];
