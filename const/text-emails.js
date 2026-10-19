@@ -7,7 +7,7 @@ const getDomain = (carrier, messageType = 'sms') => {
     }
     carrier = carrier.toLowerCase();
 
-    // ⚡ Bolt: Replaced O(N) carriers.includes with O(1) hash map lookup
+    // ⚡ Bolt: Replaced O(N) carriers.includes with O(1) hash map lookup instead of O(N) array allocation & search
     if (!mapping.hasOwnProperty(carrier)) {
         const carriers = getPossibleCarriers();
         throw `${carrier} is invalid, carrier must be one of the following: \n ${carriers.join('\n')}`;
