@@ -39,3 +39,29 @@ test('carrier name mappings point at carriers the email table supports', () => {
         }
     }
 });
+
+test('numverify rejects with error when request fails', async (t) => {
+    t.mock.method(request, 'get', (url, cb) => cb(new Error('network down')));
+    await assert.rejects(
+        lookups.numverify({ apiKey: 'KEY' }, '5551234567'),
+        /There was an error with the numVerify API/
+    );
+});
+
+test('numverify invalid JSON response throws uncaught exception', { todo: 'uncaught exception crashes process' }, async (t) => {
+    t.mock.method(request, 'get', (url, cb) => process.nextTick(() => cb(null, {}, 'not json')));
+    await lookups.numverify({ apiKey: 'KEY' }, '5551234567');
+});
+
+test('whitepages rejects with error when request fails', async (t) => {
+    t.mock.method(request, 'get', (url, cb) => cb(new Error('network down')));
+    await assert.rejects(
+        lookups.whitepages({ apiKey: 'KEY' }, '5551234567'),
+        /There was an error with the whitepages API/
+    );
+});
+
+test('whitepages invalid JSON response throws uncaught exception', { todo: 'uncaught exception crashes process' }, async (t) => {
+    t.mock.method(request, 'get', (url, cb) => process.nextTick(() => cb(null, {}, 'not json')));
+    await lookups.whitepages({ apiKey: 'KEY' }, '5551234567');
+});
