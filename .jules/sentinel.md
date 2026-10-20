@@ -12,3 +12,8 @@
 **Vulnerability:** The application was vulnerable to HTTP Parameter Pollution and Server-Side Request Forgery (SSRF) when making requests to the NumVerify and Whitepages APIs because user inputs (`number` and `country`) were concatenated directly into the request URLs.
 **Learning:** String interpolation without proper URL encoding allows users to inject arbitrary query parameters (e.g. `&access_key=hacked`) by adding special characters to their input, overriding legitimate API parameters.
 **Prevention:** Always use `encodeURIComponent()` to safely wrap any user-supplied or externally-sourced variables before inserting them into a URL query string.
+
+## 2024-10-18 - Prevent DoS from Floating Promise in Synchronous Factory
+**Vulnerability:** In `index.js`, the application triggered an asynchronous validation using `verify(config, 'configFormat')` without awaiting or handling its rejection, leading to an unhandled promise rejection that crashed the entire Node.js process if invalid configuration was provided.
+**Learning:** Calling an asynchronous function that rejects from within a synchronous context leaves a floating promise. If that promise rejects, the Node process will crash (DoS). Simply throwing an error synchronously within a `.catch()` block attached to the floating promise does not solve the issue.
+**Prevention:** When using asynchronous validation (like `node-input-validator`) within synchronous factory functions, capture the promise and suppress immediate unhandled rejections using `.catch(() => {})`. Then, explicitly `await` the captured promise inside downstream asynchronous methods to securely enforce validation without breaking the synchronous API.
