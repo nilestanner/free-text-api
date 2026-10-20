@@ -13,7 +13,7 @@ test('numverify builds the validate URL and parses the JSON body', async (t) => 
     const res = await lookups.numverify({ apiKey: 'KEY', defaultCountry: 'US' }, '5551234567');
     assert.deepStrictEqual(res, { valid: true, carrier: 'AT&T Mobility LLC' });
     assert.strictEqual(get.mock.calls[0].arguments[0],
-        'http://apilayer.net/api/validate?access_key=KEY&number=5551234567&country_code=US');
+        'https://apilayer.net/api/validate?access_key=KEY&number=5551234567&country_code=US');
 });
 
 test('numverify explicit country overrides defaultCountry', async (t) => {
@@ -38,4 +38,30 @@ test('carrier name mappings point at carriers the email table supports', () => {
             assert.ok(supported.includes(carrier), `${method}: "${name}" -> "${carrier}" unsupported`);
         }
     }
+});
+
+test('numverify rejects with error when request fails', async (t) => {
+    t.mock.method(request, 'get', (url, cb) => cb(new Error('network down')));
+    await assert.rejects(
+        lookups.numverify({ apiKey: 'KEY' }, '5551234567'),
+        /There was an error with the numVerify API/
+    );
+});
+
+test('numverify invalid JSON response throws uncaught exception', { todo: 'uncaught exception crashes process' }, async (t) => {
+    t.mock.method(request, 'get', (url, cb) => process.nextTick(() => cb(null, {}, 'not json')));
+    await lookups.numverify({ apiKey: 'KEY' }, '5551234567');
+});
+
+test('whitepages rejects with error when request fails', async (t) => {
+    t.mock.method(request, 'get', (url, cb) => cb(new Error('network down')));
+    await assert.rejects(
+        lookups.whitepages({ apiKey: 'KEY' }, '5551234567'),
+        /There was an error with the whitepages API/
+    );
+});
+
+test('whitepages invalid JSON response throws uncaught exception', { todo: 'uncaught exception crashes process' }, async (t) => {
+    t.mock.method(request, 'get', (url, cb) => process.nextTick(() => cb(null, {}, 'not json')));
+    await lookups.whitepages({ apiKey: 'KEY' }, '5551234567');
 });

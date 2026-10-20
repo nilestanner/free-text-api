@@ -3,6 +3,7 @@ const assert = require('node:assert');
 const nodemailer = require('nodemailer');
 const request = require('request');
 const freeText = require('../index.js');
+const freeTextAPI = freeText;
 
 const baseConfig = () => ({
     mailOptions: { from: 'noreply@example.com' },
@@ -35,6 +36,18 @@ test('getCarrierList returns supported carriers', (t) => {
     assert.ok(list.includes('att'));
 });
 
+test('getCarrierList returns the list of possible carriers', () => {
+    const api = freeTextAPI({
+        transport: { service: 'streamTransport' },
+        mailOptions: { from: 'test@example.com' }
+    });
+
+    const carriers = api.getCarrierList();
+    assert.ok(Array.isArray(carriers));
+    assert.ok(carriers.includes('verizon'));
+    assert.ok(carriers.includes('att'));
+});
+
 test('sendText sends an sms-gateway email when carrier is given', async (t) => {
     const sent = fakeTransport(t);
     const svc = freeText(baseConfig());
@@ -51,6 +64,30 @@ test('sendText sends an sms-gateway email when carrier is given', async (t) => {
     assert.strictEqual(sent[0].subject, 'Message from free-text-api');
 });
 
+test('sendText successfully returns message using mock transport', async () => {
+    const api = freeTextAPI({
+        transport: {
+            // Setting service to empty string will fallback to use config.transport directly
+            service: '',
+            streamTransport: true,
+            newline: 'unix',
+            buffer: true
+        },
+        mailOptions: { from: 'test@example.com' }
+    });
+
+    const result = await api.sendText({
+        number: '1234567890',
+        message: 'hello world',
+        carrier: 'verizon',
+        from: 'test@example.com'
+    });
+
+    // the mocked stream returns undefined in info.response for streaming sometimes in older nodemailer
+    // but resolving successfully with an "Email sent" means it correctly processed everything
+    assert.match(result, /Email sent:/);
+});
+
 test('sendText uses the per-message from and subject when provided', async (t) => {
     const sent = fakeTransport(t);
     const svc = freeText(baseConfig());
@@ -64,6 +101,22 @@ test('sendText uses the per-message from and subject when provided', async (t) =
     assert.strictEqual(sent[0].to, '5551234567@txt.att.net');
     assert.strictEqual(sent[0].from, 'me@example.com');
     assert.strictEqual(sent[0].subject, 'Custom');
+});
+
+test('sendText fails validation if message is missing', async () => {
+    const api = freeTextAPI({
+        transport: { service: '', streamTransport: true },
+        mailOptions: { from: 'test@example.com' }
+    });
+
+    const result = await api.sendText({
+        number: '1234567890',
+        carrier: 'verizon',
+        from: 'test@example.com'
+    });
+
+    assert.match(result, /Errors found in textOptionsFormat/);
+    assert.match(result, /message/);
 });
 
 test('sendText returns the validation error string for an invalid carrier', async (t) => {
@@ -97,15 +150,21 @@ test('sendGrid service uses the sendgrid transport wrapper', (t) => {
     assert.notStrictEqual(spy.mock.calls[0].arguments[0].service, 'SendGrid');
 });
 
-// Regression: repairTextOptions used to call getCarrier(number) with `number` undefined (ReferenceError).
-test('sendText performs carrier lookup when carrier is omitted',
-    async (t) => {
-        const sent = fakeTransport(t);
-        t.mock.method(request, 'get', (url, cb) => cb(null, {}, JSON.stringify({ valid: true, carrier: 'AT&T Mobility LLC' })));
-        const cfg = baseConfig();
-        cfg.carrierLookup = { method: 'numverify', apiKey: 'k', defaultCountry: 'US' };
-        const svc = freeText(cfg);
-        const result = await svc.sendText({ number: '5551234567', message: 'hi' });
-        assert.strictEqual(result, 'Email sent: 250 OK');
-        assert.strictEqual(sent[0].to, '5551234567@txt.att.net');
-    });
+// Regression: omitting the carrier must look up options.number without relying on a global.
+test('sendText performs carrier lookup when carrier is omitted', async (t) => {
+    const sent = fakeTransport(t);
+    const get = t.mock.method(request, 'get', (url, cb) => cb(null, {}, JSON.stringify({ valid: true, carrier: 'AT&T Mobility LLC' })));
+    const cfg = baseConfig();
+    cfg.carrierLookup = { method: 'numverify', apiKey: 'k', defaultCountry: 'US' };
+    const result = await freeText(cfg).sendText({ number: '5551234567', message: 'hi' });
+    assert.strictEqual(result, 'Email sent: 250 OK');
+    assert.match(get.mock.calls[0].arguments[0], /number=5551234567/);
+    assert.strictEqual(sent[0].to, '5551234567@txt.att.net');
+});
+
+test('sendText rejects when the omitted-carrier lookup reports an invalid number', async (t) => {
+    t.mock.method(request, 'get', (url, cb) => cb(null, {}, JSON.stringify({ valid: false })));
+    const cfg = baseConfig();
+    cfg.carrierLookup = { method: 'numverify', apiKey: 'k', defaultCountry: 'US' };
+    await assert.rejects(freeText(cfg).sendText({ number: '5551234567', message: 'hi' }), /Number is not valid/);
+});
