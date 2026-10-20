@@ -5,7 +5,10 @@ const nodemailer = require('nodemailer');
 const verify = require('./lib/verifier/verifier');
 
 module.exports = (config) => {
-    verify(config, 'configFormat');
+    // Capture validation promise to enforce securely before sending text
+    const configValidation = verify(config, 'configFormat');
+    // Prevent unhandled promise rejection DoS if sendText is never called
+    configValidation.catch(() => {});
 
     let transporter;
     if (config.transport.service && config.transport.service.toLowerCase() === 'sendgrid') {
@@ -19,6 +22,7 @@ module.exports = (config) => {
     const sendText = async (options) => {
         options = await repairTextOptions(options);
         try {
+            await configValidation;
             const verifyResult = await verify(options, 'textOptionsFormat');
             options.email = formatEmail(options);
             const result = await mail(options);
