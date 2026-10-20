@@ -10,3 +10,6 @@
 ## 2024-11-20 - Custom `node-input-validator` extension missing test coverage
 **Learning:** The custom rule `carrierLookup` registered in `lib/verifier/verifier.js` using `Validator.extend` lacks direct testing in `test/verifier.test.js`.
 **Action:** Add tests specifically checking `carrierLookup` rule directly using `node-input-validator` instantiation in `test/verifier.test.js`.
+## 2026-10-20 - Test missing logic paths in node input validator
+**Learning:** Ensure 100% logic coverage by testing extensions through raw validator instantiation instead of solely through API entrypoint if complex.
+**Action:** Add direct coverage for `node-input-validator` extensions using `Validator` class directly.
