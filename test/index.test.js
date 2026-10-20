@@ -150,38 +150,21 @@ test('sendGrid service uses the sendgrid transport wrapper', (t) => {
     assert.notStrictEqual(spy.mock.calls[0].arguments[0].service, 'SendGrid');
 });
 
-// BUG (not fixed in this PR): repairTextOptions calls getCarrier(number) but `number`
-// is not defined in that scope, so omitting `carrier` throws a ReferenceError
-// instead of performing the configured carrier lookup.
-test('sendText performs carrier lookup when carrier is omitted',
-    { todo: 'repairTextOptions references undefined `number` (ReferenceError)' },
-    async (t) => {
-        fakeTransport(t);
-        t.mock.method(request, 'get', (url, cb) => cb(null, {}, JSON.stringify({ valid: true, carrier: 'AT&T Mobility LLC' })));
-        const cfg = baseConfig();
-        cfg.carrierLookup = { method: 'numverify', apiKey: 'k', defaultCountry: 'US' };
-        const svc = freeText(cfg);
-        const result = await svc.sendText({ number: '5551234567', message: 'hi' });
-        assert.strictEqual(result, 'Email sent: 250 OK');
-    });
+// Regression: omitting the carrier must look up options.number without relying on a global.
+test('sendText performs carrier lookup when carrier is omitted', async (t) => {
+    const sent = fakeTransport(t);
+    const get = t.mock.method(request, 'get', (url, cb) => cb(null, {}, JSON.stringify({ valid: true, carrier: 'AT&T Mobility LLC' })));
+    const cfg = baseConfig();
+    cfg.carrierLookup = { method: 'numverify', apiKey: 'k', defaultCountry: 'US' };
+    const result = await freeText(cfg).sendText({ number: '5551234567', message: 'hi' });
+    assert.strictEqual(result, 'Email sent: 250 OK');
+    assert.match(get.mock.calls[0].arguments[0], /number=5551234567/);
+    assert.strictEqual(sent[0].to, '5551234567@txt.att.net');
+});
 
-test('sendText fails if carrier is not provided and lookup fails (todo bug)', { todo: 'repairTextOptions has a ReferenceError: number is not defined when no carrier is provided' }, async () => {
-    const api = freeTextAPI({
-        transport: { service: '', streamTransport: true },
-        mailOptions: { from: 'test@example.com' },
-        carrierLookup: {
-            method: 'numverify',
-            apiKey: 'fake'
-        }
-    });
-
-    const result = await api.sendText({
-        number: '1234567890',
-        message: 'hello world',
-        from: 'test@example.com'
-    });
-
-    // The bug will cause a ReferenceError. We assert that it actually succeeded, which will fail because of the bug,
-    // satisfying the `todo` test that a bug exists.
-    assert.match(result, /Email sent:/);
+test('sendText rejects when the omitted-carrier lookup reports an invalid number', async (t) => {
+    t.mock.method(request, 'get', (url, cb) => cb(null, {}, JSON.stringify({ valid: false })));
+    const cfg = baseConfig();
+    cfg.carrierLookup = { method: 'numverify', apiKey: 'k', defaultCountry: 'US' };
+    await assert.rejects(freeText(cfg).sendText({ number: '5551234567', message: 'hi' }), /Number is not valid/);
 });
