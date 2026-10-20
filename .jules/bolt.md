@@ -9,3 +9,7 @@
 ## 2024-10-24 - [Lazy Module Loading]
 **Learning:** Large dependencies like `nodemailer-sendgrid-transport` and `request` (via carrier-lookup) are loaded at the root of `index.js`, even if the user never uses SendGrid or the lookup functions. This adds ~220ms to startup time unconditionally.
 **Action:** Move `require` calls for optional dependencies inside the specific functions/conditionals where they are used to only incur the penalty when needed.
+
+## 2024-10-24 - [Accidental Eager Loading via Barrel Files]
+**Learning:** `Object.keys()` on a barrel file can inadvertently eagerly load heavy dependencies (like `request`) that were intended to be lazily loaded elsewhere, completely negating the benefit of the lazy loads.
+**Action:** Always be mindful of what gets executed when requiring a file or barrel. Use constants or configurations instead of loading functional logic just to get property keys.
