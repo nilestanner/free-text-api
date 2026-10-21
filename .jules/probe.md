@@ -13,3 +13,6 @@
 ## 2026-10-20 - Test missing logic paths in node input validator
 **Learning:** Ensure 100% logic coverage by testing extensions through raw validator instantiation instead of solely through API entrypoint if complex.
 **Action:** Add direct coverage for `node-input-validator` extensions using `Validator` class directly.
+## 2024-11-20 - Index.js configuration bugs
+**Learning:** `freeText({ transport: {} })` crashes synchronously later in `repairTextOptions` because `mailOptions` defaults aren't verified correctly, and `freeText({ mailOptions: {} })` crashes synchronously immediately reading `transport.service`.
+**Action:** When bugs are exposed during test writing, write them using `{ todo: 'reason' }` while also adding valid/happy-path test cases so that coverage actually increases for the correct behaviors too.
