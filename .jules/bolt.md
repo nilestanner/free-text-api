@@ -13,3 +13,7 @@
 ## 2024-10-24 - [Accidental Eager Loading via Barrel Files]
 **Learning:** `Object.keys()` on a barrel file can inadvertently eagerly load heavy dependencies (like `request`) that were intended to be lazily loaded elsewhere, completely negating the benefit of the lazy loads.
 **Action:** Always be mindful of what gets executed when requiring a file or barrel. Use constants or configurations instead of loading functional logic just to get property keys.
+
+## 2024-05-14 - Promise caching deduplicates I/O
+**Learning:** In highly concurrent flows, standard caching isn't enough to prevent duplicate outgoing external API requests for identical concurrent executions, because the cache remains empty until the first response returns.
+**Action:** Caching the _promise_ itself prevents the race condition and causes subsequent callers to instantly await the pending request rather than spinning up a new one.

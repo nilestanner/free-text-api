@@ -7,6 +7,9 @@ const verify = require('./lib/verifier/verifier');
 module.exports = (config) => {
     // Capture validation promise to enforce securely before sending text
     const configValidation = verify(config, 'configFormat');
+
+    // ⚡ Bolt: Cache carrier lookups to prevent duplicate expensive external API requests
+    const carrierCache = new Map();
     // Prevent unhandled promise rejection DoS if sendText is never called
     configValidation.catch(() => {});
 
@@ -55,14 +58,35 @@ module.exports = (config) => {
         if (!config.carrierLookup || !config.carrierLookup.method || !config.carrierLookup.apiKey) {
             throw 'No Carrier method was provided in the config and no Carrier was provided in the request';
         }
-        // ⚡ Bolt: Lazily require carrierLookup (and `request` lib) to save ~100ms on startup for users not doing lookups
-        const carrierLookup = require('./lib/carrier-lookup/barrel.js');
-        const carrierInfo = await carrierLookup[config.carrierLookup.method.toLowerCase()](config.carrierLookup, number);
-        if (carrierInfo.valid) {
-            const carrier = consts.verifiers[config.carrierLookup.method][carrierInfo.carrier];
-            return carrier;
+
+        const numberStr = String(number);
+        if (carrierCache.has(numberStr)) {
+            return carrierCache.get(numberStr);
         }
-        throw `Number is not valid, check number or carrier lookup configuration`;
+
+        const fetchCarrier = async () => {
+            // ⚡ Bolt: Lazily require carrierLookup (and `request` lib) to save ~100ms on startup for users not doing lookups
+            const carrierLookup = require('./lib/carrier-lookup/barrel.js');
+            const carrierInfo = await carrierLookup[config.carrierLookup.method.toLowerCase()](config.carrierLookup, numberStr);
+            if (carrierInfo.valid) {
+                const carrier = consts.verifiers[config.carrierLookup.method][carrierInfo.carrier];
+                return carrier;
+            }
+            throw `Number is not valid, check number or carrier lookup configuration`;
+        };
+
+        const fetchPromise = fetchCarrier();
+
+        // Remove from cache if the API request fails so we can retry later
+        fetchPromise.catch(() => carrierCache.delete(numberStr));
+
+        // Prevent memory leaks by capping cache at 1000 entries
+        if (carrierCache.size >= 1000) {
+            carrierCache.delete(carrierCache.keys().next().value);
+        }
+        carrierCache.set(numberStr, fetchPromise);
+
+        return fetchPromise;
     }
     
     const formatEmail = ({number, country, carrier}) => {
