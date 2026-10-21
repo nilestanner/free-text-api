@@ -48,9 +48,12 @@ test('numverify rejects with error when request fails', async (t) => {
     );
 });
 
-test('numverify invalid JSON response throws uncaught exception', { todo: 'uncaught exception crashes process' }, async (t) => {
+test('numverify invalid JSON response rejects properly', async (t) => {
     t.mock.method(request, 'get', (url, cb) => process.nextTick(() => cb(null, {}, 'not json')));
-    await lookups.numverify({ apiKey: 'KEY' }, '5551234567');
+    await assert.rejects(
+        lookups.numverify({ apiKey: 'KEY' }, '5551234567'),
+        /There was an error parsing the numVerify API response/
+    );
 });
 
 test('whitepages rejects with error when request fails', async (t) => {
@@ -61,7 +64,10 @@ test('whitepages rejects with error when request fails', async (t) => {
     );
 });
 
-test('whitepages invalid JSON response throws uncaught exception', { todo: 'uncaught exception crashes process' }, async (t) => {
+test('whitepages invalid JSON response rejects properly', async (t) => {
     t.mock.method(request, 'get', (url, cb) => process.nextTick(() => cb(null, {}, 'not json')));
-    await lookups.whitepages({ apiKey: 'KEY' }, '5551234567');
+    await assert.rejects(
+        lookups.whitepages({ apiKey: 'KEY' }, '5551234567'),
+        /There was an error parsing the whitepages API response/
+    );
 });
