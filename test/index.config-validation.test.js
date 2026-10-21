@@ -2,13 +2,13 @@ const test = require('node:test');
 const assert = require('node:assert');
 const freeText = require('../index.js');
 
-test('sendText handles missing mailOptions gracefully without throwing synchronously (bug present)', { todo: 'repairTextOptions crashes if config.mailOptions is undefined' }, async () => {
+test('sendText handles missing mailOptions gracefully without throwing synchronously (bug present)', async () => {
     const api = freeText({ transport: { service: 'test' } });
     const result = await api.sendText({ number: '1234567890', message: 'test', carrier: 'verizon' });
     assert.match(result, /Errors found in configFormat/);
 });
 
-test('constructor handles missing transport gracefully without throwing synchronously (bug present)', { todo: 'index crashes if config.transport is undefined' }, () => {
+test('constructor handles missing transport gracefully without throwing synchronously (bug present)', () => {
     assert.doesNotThrow(() => {
         freeText({ mailOptions: { from: 'a@b.com' } });
     });

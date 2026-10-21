@@ -11,18 +11,25 @@ module.exports = (config) => {
     configValidation.catch(() => {});
 
     let transporter;
-    if (config.transport.service && config.transport.service.toLowerCase() === 'sendgrid') {
+    if (config && config.transport && config.transport.service && config.transport.service.toLowerCase() === 'sendgrid') {
         // ⚡ Bolt: Lazily require sendgrid transport to save ~120ms on startup for non-SendGrid users
         const sgTransport = require('nodemailer-sendgrid-transport');
         transporter = nodemailer.createTransport(sgTransport(config.transport));
     } else {
-        transporter = nodemailer.createTransport(config.transport);
+        transporter = nodemailer.createTransport((config && config.transport) || {});
     }
     
     const sendText = async (options) => {
-        options = await repairTextOptions(options);
+        // Verify config first to prevent crashes on malformed configs
         try {
             await configValidation;
+        } catch (ex) {
+            return ex.toString();
+        }
+
+        options = options || {};
+        options = await repairTextOptions(options);
+        try {
             const verifyResult = await verify(options, 'textOptionsFormat');
             options.email = formatEmail(options);
             const result = await mail(options);
@@ -35,7 +42,7 @@ module.exports = (config) => {
 
     const repairTextOptions = async (options) => {
         if (!options.from) {
-            options.from = config.mailOptions.from;
+            options.from = (config && config.mailOptions) ? config.mailOptions.from : undefined;
         }
         if (!options.carrier) {
             options.carrier = await getCarrier(options.number);
