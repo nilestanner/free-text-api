@@ -16,3 +16,8 @@
 ## 2024-11-20 - Index.js configuration bugs
 **Learning:** `freeText({ transport: {} })` crashes synchronously later in `repairTextOptions` because `mailOptions` defaults aren't verified correctly, and `freeText({ mailOptions: {} })` crashes synchronously immediately reading `transport.service`.
 **Action:** When bugs are exposed during test writing, write them using `{ todo: 'reason' }` while also adding valid/happy-path test cases so that coverage actually increases for the correct behaviors too.
+## 2024-05-14 - Test Runner Rejection Handling
+
+**Learning:** When using `assert.rejects()` in Node.js native test runner to test error paths, do not wrap the assertion in an empty `try/catch` block. Doing so causes the runner to swallow the `AssertionError` if the tested code incorrectly resolves instead of rejecting, which leads to a false passing test.
+
+**Action:** Always place `assert.rejects()` directly at the top level or within an appropriately scoped block without an empty catch block, so that test failures correctly propagate.
