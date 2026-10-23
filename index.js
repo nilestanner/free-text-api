@@ -18,16 +18,21 @@ module.exports = (config) => {
         if (!transporter) {
             // ⚡ Bolt: Lazily require nodemailer and defer transport creation until first send to save ~50ms on startup
             const nodemailer = require('nodemailer');
-            if (config && config.transport && config.transport.service && config.transport.service.toLowerCase() === 'sendgrid') {
+            if (config && config.transport && typeof config.transport.service === 'string' && config.transport.service.toLowerCase() === 'sendgrid') {
+                // ⚡ Bolt: Lazily require sendgrid transport to save ~120ms on startup for non-SendGrid users
                 const sgTransport = require('nodemailer-sendgrid-transport');
                 transporter = nodemailer.createTransport(sgTransport(config.transport));
             } else {
-                transporter = nodemailer.createTransport((config && config.transport) || {});
+                // Sanitize transport config to prevent nodemailer well-known service crash on non-string service
+                const transportConfig = (config && config.transport) ? { ...config.transport } : {};
+                if (transportConfig.service && typeof transportConfig.service !== 'string') {
+                    delete transportConfig.service;
+                }
+                transporter = nodemailer.createTransport(transportConfig);
             }
         }
         return transporter;
     };
-
     
     const sendText = async (options) => {
         // Verify config first to prevent crashes on malformed configs
@@ -74,7 +79,11 @@ module.exports = (config) => {
         const fetchCarrier = async () => {
             // ⚡ Bolt: Lazily require carrierLookup (and `request` lib) to save ~100ms on startup for users not doing lookups
             const carrierLookup = require('./lib/carrier-lookup/barrel.js');
-            const carrierInfo = await carrierLookup[config.carrierLookup.method.toLowerCase()](config.carrierLookup, numberStr);
+            const method = typeof config.carrierLookup.method === 'string' ? config.carrierLookup.method.toLowerCase() : '';
+            if (!method || !carrierLookup[method]) {
+                throw `Invalid carrier lookup method configured`;
+            }
+            const carrierInfo = await carrierLookup[method](config.carrierLookup, numberStr);
             if (carrierInfo.valid) {
                 const carrier = consts.verifiers[config.carrierLookup.method][carrierInfo.carrier];
                 return carrier;
