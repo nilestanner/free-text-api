@@ -17,3 +17,7 @@
 ## 2024-05-14 - Promise caching deduplicates I/O
 **Learning:** In highly concurrent flows, standard caching isn't enough to prevent duplicate outgoing external API requests for identical concurrent executions, because the cache remains empty until the first response returns.
 **Action:** Caching the _promise_ itself prevents the race condition and causes subsequent callers to instantly await the pending request rather than spinning up a new one.
+
+## 2024-10-24 - [Deferring Expensive Constructor Logic]
+**Learning:** Loading `nodemailer` and executing `nodemailer.createTransport()` unconditionally during library initialization adds ~50ms of overhead, even if the user never sends a text.
+**Action:** Move expensive module imports (`require('nodemailer')`) and synchronous initializations (`createTransport()`) inside lazy getter functions (e.g., `getTransporter()`) so they only execute when actually needed by downstream methods. Make sure to update test cases that spy on initialization methods to invoke those downstream methods so the spies fire properly.

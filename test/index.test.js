@@ -142,9 +142,10 @@ test('sendText resolves with the error string when the transport fails', async (
     assert.match(result, /smtp down/);
 });
 
-test('sendGrid service uses the sendgrid transport wrapper', (t) => {
-    const spy = t.mock.method(nodemailer, 'createTransport', () => ({ sendMail() {} }));
-    freeText({ mailOptions: { from: 'a@b.com' }, transport: { service: 'SendGrid', auth: { api_key: 'k' } } });
+test('sendGrid service uses the sendgrid transport wrapper', async (t) => {
+    const spy = t.mock.method(nodemailer, 'createTransport', () => ({ sendMail(opts, cb) { cb(null, { response: '250 OK' }); } }));
+    const api = freeText({ mailOptions: { from: 'a@b.com' }, transport: { service: 'SendGrid', auth: { api_key: 'k' } } });
+    await api.sendText({ number: '5551234567', message: 'hi', carrier: 'att' });
     assert.strictEqual(spy.mock.calls.length, 1);
     // sendgrid-transport returns a transport object (with name/send), not the raw config
     assert.notStrictEqual(spy.mock.calls[0].arguments[0].service, 'SendGrid');
