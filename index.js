@@ -1,7 +1,7 @@
 const fs = require('fs');
 // const config = require('./config.js');
 const consts = require('./const/barrel.js');
-const nodemailer = require('nodemailer');
+
 const verify = require('./lib/verifier/verifier');
 
 module.exports = (config) => {
@@ -14,13 +14,20 @@ module.exports = (config) => {
     configValidation.catch(() => {});
 
     let transporter;
-    if (config && config.transport && config.transport.service && config.transport.service.toLowerCase() === 'sendgrid') {
-        // ⚡ Bolt: Lazily require sendgrid transport to save ~120ms on startup for non-SendGrid users
-        const sgTransport = require('nodemailer-sendgrid-transport');
-        transporter = nodemailer.createTransport(sgTransport(config.transport));
-    } else {
-        transporter = nodemailer.createTransport((config && config.transport) || {});
-    }
+    const getTransporter = () => {
+        if (!transporter) {
+            // ⚡ Bolt: Lazily require nodemailer and defer transport creation until first send to save ~50ms on startup
+            const nodemailer = require('nodemailer');
+            if (config && config.transport && config.transport.service && config.transport.service.toLowerCase() === 'sendgrid') {
+                const sgTransport = require('nodemailer-sendgrid-transport');
+                transporter = nodemailer.createTransport(sgTransport(config.transport));
+            } else {
+                transporter = nodemailer.createTransport((config && config.transport) || {});
+            }
+        }
+        return transporter;
+    };
+
     
     const sendText = async (options) => {
         // Verify config first to prevent crashes on malformed configs
@@ -103,7 +110,7 @@ module.exports = (config) => {
                 to: email,
                 text: message
             };
-            transporter.sendMail(mailOptions, (error, info) => {
+            getTransporter().sendMail(mailOptions, (error, info) => {
                 if (error) {
                   reject(error);
                 } else {
