@@ -21,3 +21,8 @@
 **Vulnerability:** The application crashed with a `TypeError` when `undefined` or `null` was passed to the `Verifier` (and consequently `Validator` class from `node-input-validator`), leading to a potential Denial of Service (DoS) attack if a user provided no configuration or options.
 **Learning:** `node-input-validator` does not gracefully handle null/undefined data objects when instantiated; it expects an object to read properties from during evaluation.
 **Prevention:** Defensively validate data objects with a fallback empty object (e.g. `const validator = new Validator(obj || {}, formats)`) so that it can safely evaluate fields and return expected validation errors rather than crashing the application synchronously.
+
+## 2024-10-23 - Prevent DoS from TypeErrors when Expecting Strings
+**Vulnerability:** Application crashed synchronously due to `TypeError: value.toLowerCase is not a function` and `TypeError: key.split is not a function` when non-string values (like objects or numbers) were passed to validation extensions or transport configurations.
+**Learning:** String methods (like `.toLowerCase()`) and internal library functions (like `nodemailer`'s well-known resolver which splits strings) expect string primitives. If external input is not strictly validated as a string before invoking these methods, it throws an unhandled synchronous `TypeError`, leading to a complete Node.js process crash (Denial of Service).
+**Prevention:** Strictly enforce `typeof value === 'string'` checks before invoking string methods on configuration inputs or validation rules, and defensively throw structured errors if invalid types are encountered.
