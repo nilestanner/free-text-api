@@ -5,3 +5,6 @@
 ## 2024-10-23 - Unreachable catch block in `sendText` formatEmail / mail catch block
 **Learning:** In `index.js`, the `catch (ex)` block inside `sendText` around `verify`, `formatEmail`, and `mail` is only reachable via `mail` rejecting or `verify` validation failing because `formatEmail` cannot throw with the strictly validated inputs `verify` permits. Specifically, `verify(options, 'textOptionsFormat')` ensures `options.carrier` is a valid key in `consts.verifiers`, meaning `formatEmail` will never fail a dictionary lookup.
 **Action:** Mocking the transport (or ensuring invalid validation fails) is sufficient to test this catch path without forcing impossible `formatEmail` failure mocks.
+## 2024-10-23 - Falsy fallback for nodemailer transport options
+**Learning:** In `index.js`, the `nodemailer.createTransport` method is called with a fallback `(config && config.transport) || {}`. This fallback is rarely hit because the constructor validates that `config.transport` is present. The only way to achieve branch coverage on this fallback is to mutate the configuration object after the async validation resolves.
+**Action:** When testing tightly coupled async validation, bypass it by providing a valid config on instantiation, waiting a tick with `await new Promise(setImmediate)`, and then deleting the property before invoking methods that depend on it.
