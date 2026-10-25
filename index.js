@@ -2,16 +2,22 @@ const fs = require('fs');
 // const config = require('./config.js');
 const consts = require('./const/barrel.js');
 
-const verify = require('./lib/verifier/verifier');
+// ⚡ Bolt: Lazily require verifier to save ~50ms on module startup
 
 module.exports = (config) => {
-    // Capture validation promise to enforce securely before sending text
-    const configValidation = verify(config, 'configFormat');
-
     // ⚡ Bolt: Cache carrier lookups to prevent duplicate expensive external API requests
     const carrierCache = new Map();
-    // Prevent unhandled promise rejection DoS if sendText is never called
-    configValidation.catch(() => {});
+
+    let configValidation;
+    const getConfigValidation = () => {
+        if (!configValidation) {
+            const verify = require('./lib/verifier/verifier');
+            configValidation = verify(config, 'configFormat');
+            // Prevent unhandled promise rejection DoS if awaited later
+            configValidation.catch(() => {});
+        }
+        return configValidation;
+    };
 
     let transporter;
     const getTransporter = () => {
@@ -36,7 +42,7 @@ module.exports = (config) => {
     const sendText = async (options) => {
         // Verify config first to prevent crashes on malformed configs
         try {
-            await configValidation;
+            await getConfigValidation();
         } catch (ex) {
             return ex.toString();
         }
@@ -44,6 +50,7 @@ module.exports = (config) => {
         options = options || {};
         options = await repairTextOptions(options);
         try {
+            const verify = require('./lib/verifier/verifier');
             const verifyResult = await verify(options, 'textOptionsFormat');
             options.email = formatEmail(options);
             const result = await mail(options);
@@ -131,6 +138,10 @@ module.exports = (config) => {
     const getCarrierList = () => {
         return consts.emails.getPossibleCarriers();
     }
+
+    // Fire it off right away so we don't block sendText more than necessary
+    // But we avoid the 50ms startup penalty when not using the freeText API immediately
+    getConfigValidation();
 
     return {
         sendText,

@@ -20,9 +20,8 @@ test('repairTextOptions undefined config handles options.from', async (t) => {
     };
     const api = freeTextAPI(config);
 
-    // Bypassing async initialization without timers: wait for setImmediate to ensure
-    // internal configValidation promise chain has started/resolved.
-    await new Promise(setImmediate);
+    // Trigger getConfigValidation immediately
+    await new Promise(resolve => setImmediate(resolve));
     delete config.mailOptions;
 
     t.mock.method(request, 'get', (url, cb) => cb(null, {}, JSON.stringify({ valid: true, carrier: 'AT&T Mobility LLC' })));
@@ -65,10 +64,7 @@ test('getTransporter fallback uses {} when config is modified to bypass transpor
     };
     const api = freeTextAPI(config);
 
-    // Wait for initial config validation to resolve
-    await new Promise(setImmediate);
-
-    // Now delete transport to hit the fallback `(config && config.transport) || {}`
+    await new Promise(resolve => setImmediate(resolve));
     delete config.transport;
 
     // Send a valid request to trigger getTransporter
@@ -86,9 +82,7 @@ test('getTransporter gracefully handles missing transport service property with 
     };
     const api = freeTextAPI(config);
 
-    // Give `configValidation` time to resolve internally before we modify `config`
-    await new Promise(setImmediate);
-
+    await new Promise(resolve => setImmediate(resolve));
     // Delete transport to hit the fallback condition in `getTransporter`:
     // `transporter = nodemailer.createTransport((config && config.transport) || {});`
     // where `config.transport` is now undefined.

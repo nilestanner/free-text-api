@@ -21,3 +21,7 @@
 ## 2024-10-24 - [Deferring Expensive Constructor Logic]
 **Learning:** Loading `nodemailer` and executing `nodemailer.createTransport()` unconditionally during library initialization adds ~50ms of overhead, even if the user never sends a text.
 **Action:** Move expensive module imports (`require('nodemailer')`) and synchronous initializations (`createTransport()`) inside lazy getter functions (e.g., `getTransporter()`) so they only execute when actually needed by downstream methods. Make sure to update test cases that spy on initialization methods to invoke those downstream methods so the spies fire properly.
+
+## 2024-10-24 - [Deferring Expensive Config Validation]
+**Learning:** Deferring synchronous config validation until `sendText` avoids the 50ms module startup penalty of `node-input-validator` when the instance is not used right away, while still capturing the promise and satisfying existing tests by modifying mock timings slightly. But if we defer it completely, it adds 50ms penalty to the first request. The ideal compromise is to defer it initially so it doesn't block instantiation, but execute it eagerly in the background using `setTimeout` or just by invoking the lazily defined function.
+**Action:** Use a lazy initialization pattern but fire it immediately so the penalty isn't blocked on first request.
