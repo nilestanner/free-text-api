@@ -106,3 +106,25 @@ test('getTransporter gracefully handles missing transport service property with 
     // It's impossible for `result` to be undefined or null here.
     assert.strictEqual(typeof result, 'string', 'Expected result to be a string error or string success message from the fallback transport');
 });
+
+test('getTransporter throws TypeError when transport.service is not a string', async () => {
+    const config = {
+        mailOptions: { from: 'hello@example.com' },
+        transport: { service: { invalid: true }, jsonTransport: true },
+        carrierLookup: { method: 'numverify', apiKey: 'fake' }
+    };
+    const api = freeTextAPI(config);
+    const result = await api.sendText({ number: '1234567890', message: 'test msg', carrier: 'att' });
+    assert.match(result, /TypeError: config.transport.service must be a string/);
+});
+
+test('getCarrier rejects when carrier lookup method is invalid', async () => {
+    const config = {
+        mailOptions: { from: 'hello@example.com' },
+        transport: { service: 'streamTransport', jsonTransport: true },
+        carrierLookup: { method: 'invalid_method', apiKey: 'fake' }
+    };
+    const api = freeTextAPI(config);
+
+    await assert.rejects(api.sendText({ number: '1234567890', message: 'test msg' }), /Error: Invalid carrier lookup method/);
+});
