@@ -2,11 +2,18 @@ const fs = require('fs');
 // const config = require('./config.js');
 const consts = require('./const/barrel.js');
 
-const verify = require('./lib/verifier/verifier');
+// ⚡ Bolt: Lazily require verify to avoid loading node-input-validator (~60ms) and parsing all rules if validation isn't needed right away
+let verify;
+const getVerify = () => {
+    if (!verify) {
+        verify = require('./lib/verifier/verifier');
+    }
+    return verify;
+};
 
 module.exports = (config) => {
     // Capture validation promise to enforce securely before sending text
-    const configValidation = verify(config, 'configFormat');
+    const configValidation = getVerify()(config, 'configFormat');
 
     // ⚡ Bolt: Cache carrier lookups to prevent duplicate expensive external API requests
     const carrierCache = new Map();
@@ -44,7 +51,7 @@ module.exports = (config) => {
         options = options || {};
         options = await repairTextOptions(options);
         try {
-            const verifyResult = await verify(options, 'textOptionsFormat');
+            const verifyResult = await getVerify()(options, 'textOptionsFormat');
             options.email = formatEmail(options);
             const result = await mail(options);
             return result;

@@ -21,3 +21,7 @@
 ## 2024-10-24 - [Deferring Expensive Constructor Logic]
 **Learning:** Loading `nodemailer` and executing `nodemailer.createTransport()` unconditionally during library initialization adds ~50ms of overhead, even if the user never sends a text.
 **Action:** Move expensive module imports (`require('nodemailer')`) and synchronous initializations (`createTransport()`) inside lazy getter functions (e.g., `getTransporter()`) so they only execute when actually needed by downstream methods. Make sure to update test cases that spy on initialization methods to invoke those downstream methods so the spies fire properly.
+
+## 2024-10-27 - Lazily Loading node-input-validator
+**Learning:** Initializing modules at the top level eager-loads dependencies like `node-input-validator` which takes ~60ms to evaluate rules and parse messages on module startup. In libraries where a user may not immediately call methods that validate (like config or text options), or they are just exploring the package API (e.g. `getCarrierList`), this delays the API startup significantly.
+**Action:** Defer requiring the `verifier.js` module (and inherently `node-input-validator`) to be loaded inside the exported factory function (e.g. via a lazy getter `getVerify()`) to shift this cost to runtime. The main API now requires in ~2ms instead of ~60ms.
