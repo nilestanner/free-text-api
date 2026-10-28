@@ -169,3 +169,17 @@ test('sendText rejects when the omitted-carrier lookup reports an invalid number
     cfg.carrierLookup = { method: 'numverify', apiKey: 'k', defaultCountry: 'US' };
     await assert.rejects(freeText(cfg).sendText({ number: '5551234567', message: 'hi' }), /Number is not valid/);
 });
+
+
+for (const field of ['message', 'subject']) {
+    test(`sendText rejects object injection in ${field} before creating a transport`, async (t) => {
+        const create = t.mock.method(nodemailer, 'createTransport', () => {
+            throw new Error('Validation must prevent transport creation');
+        });
+        const options = { number: '5551234567', message: 'hello', carrier: 'verizon' };
+        options[field] = { path: 'package.json' };
+        const result = await freeText(baseConfig()).sendText(options);
+        assert.match(result, new RegExp(`The ${field} must be a string`));
+        assert.strictEqual(create.mock.calls.length, 0);
+    });
+}
