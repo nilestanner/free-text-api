@@ -1,7 +1,7 @@
 const fs = require('fs');
 // const config = require('./config.js');
 const consts = require('./const/barrel.js');
-
+const nodemailer = require('nodemailer');
 const verify = require('./lib/verifier/verifier');
 
 module.exports = (config) => {
@@ -14,25 +14,18 @@ module.exports = (config) => {
     configValidation.catch(() => {});
 
     let transporter;
-    const getTransporter = () => {
-        if (!transporter) {
-            // ⚡ Bolt: Lazily require nodemailer and defer transport creation until first send to save ~50ms on startup
-            const nodemailer = require('nodemailer');
-            if (config && config.transport && typeof config.transport.service === 'string' && config.transport.service.toLowerCase() === 'sendgrid') {
-                // ⚡ Bolt: Lazily require sendgrid transport to save ~120ms on startup for non-SendGrid users
-                const sgTransport = require('nodemailer-sendgrid-transport');
-                transporter = nodemailer.createTransport(sgTransport(config.transport));
-            } else {
-                // Sanitize transport config to prevent nodemailer well-known service crash on non-string service
-                const transportConfig = (config && config.transport) ? { ...config.transport } : {};
-                if (transportConfig.service && typeof transportConfig.service !== 'string') {
-                    delete transportConfig.service;
-                }
-                transporter = nodemailer.createTransport(transportConfig);
-            }
+    if (config && config.transport && typeof config.transport.service === 'string' && config.transport.service.toLowerCase() === 'sendgrid') {
+        // ⚡ Bolt: Lazily require sendgrid transport to save ~120ms on startup for non-SendGrid users
+        const sgTransport = require('nodemailer-sendgrid-transport');
+        transporter = nodemailer.createTransport(sgTransport(config.transport));
+    } else {
+        // Sanitize transport config to prevent nodemailer well-known service crash on non-string service
+        const transportConfig = (config && config.transport) ? { ...config.transport } : {};
+        if (transportConfig.service && typeof transportConfig.service !== 'string') {
+            delete transportConfig.service;
         }
-        return transporter;
-    };
+        transporter = nodemailer.createTransport(transportConfig);
+    }
     
     const sendText = async (options) => {
         // Verify config first to prevent crashes on malformed configs
@@ -119,7 +112,7 @@ module.exports = (config) => {
                 to: email,
                 text: message
             };
-            getTransporter().sendMail(mailOptions, (error, info) => {
+            transporter.sendMail(mailOptions, (error, info) => {
                 if (error) {
                   reject(error);
                 } else {
